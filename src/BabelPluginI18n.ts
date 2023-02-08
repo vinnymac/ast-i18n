@@ -4,10 +4,11 @@ import {
   hasStringLiteralArguments,
   hasStringLiteralJSXAttribute,
   isSvgElementAttribute
-} from "./visitorChecks";
-import { NodePath } from "ast-types";
-import { JSXElement } from "ast-types/gen/nodes";
-import jsx from "ast-types/def/jsx";
+} from './visitorChecks';
+import { NodePath } from 'ast-types';
+import htmlAttributes from 'react-html-attributes';
+import { getAstConfig } from './config';
+import { log } from './log';
 
 let keyMaxLength = 40;
 let phrases: string[] = [];
@@ -52,22 +53,43 @@ function BabelPluginI18n(): PluginObj {
       JSXExpressionContainer(path) {
         const { node } = path;
 
+        if (path.parent.name?.name) {
+          const { blackListJsxAttributeName } = getAstConfig();
+          if (blackListJsxAttributeName.includes(path.parent.name.name)) {
+            log('Avoid JSX Attribute', path.parent.name.name)
+            return;
+          }
+        } else {
+          log('path.parent.name', path.parent.name)
+        }
+
         if (node.expression.type === 'StringLiteral') {
+          log('path.node.expression.value', path.node.expression.value);
           addPhrase(path.node.expression.value);
         } else if (node.expression.type === 'ConditionalExpression') {
           let expression = path.node.expression;
           if (expression.consequent.type === 'StringLiteral') {
+            log('expression.consequent.value', expression.consequent.value);
             addPhrase(expression.consequent.value)
           }
           if (expression.alternate.type === 'StringLiteral') {
+            log('expression.alternate.value', expression.alternate.value);
             addPhrase(expression.alternate.value);
           }
         }
       },
       CallExpression(path) {
+        if (path && Array.isArray(path.container) && path.container[0]?.value) {
+          const element = path.container[0].value;
+          if (htmlAttributes.elements.html.includes(element) || htmlAttributes.elements.svg.includes(element)) {
+            return;
+          }
+        }
+
         if (hasStringLiteralArguments(path)) {
           for (const arg of path.node.arguments) {
             if (arg.type === 'StringLiteral') {
+              log('argtype string lit', arg.value);
               addPhrase(arg.value)
             }
 
@@ -78,6 +100,7 @@ function BabelPluginI18n(): PluginObj {
 
               for (const prop of arg.properties) {
                 if (prop.value && prop.value.type === 'StringLiteral') {
+                  log('propvaluetype string lit', prop.value.value);
                   addPhrase(prop.value.value);
                 }
               }
