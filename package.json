@@ -64,7 +64,7 @@
     "start": "yarn b src/index.ts",
     "test": "jest",
     "watch": "babel --extensions \".es6,.js,.es,.jsx,.mjs,.ts,.tsx\" -w -d ./lib ./src",
-    "codeshift": "node node_modules/.bin/jscodeshift"
+    "codeshift": "node node_modules/.bin/jscodeshift -t ./src/i18nTransformerCodemod.ts"
   },
   "files": [
     "lib",
