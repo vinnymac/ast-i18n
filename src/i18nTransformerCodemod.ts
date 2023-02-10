@@ -68,8 +68,13 @@ const addI18nImport = (
   }
 };
 
+let keyMaxLength = 40;
+
 function transform(file: FileInfo, api: API, options: Options) {
   setKeyPrefix(options.keyPrefix);
+  if (options.keyMaxLength) {
+    keyMaxLength = parseInt(options.keyMaxLength, 10);
+  }
   const j = api.jscodeshift; // alias the jscodeshift API
   if (file.path.endsWith('.spec.js') || file.path.endsWith('.test.js')) {
     return;
@@ -232,7 +237,7 @@ function translateFunctionArguments(j: JSCodeshift, root: Collection<any>) {
       if (hasStringLiteralArguments(path)) {
         path.node.arguments = path.node.arguments.map((arg) => {
           if (arg.type === 'StringLiteral' && arg.value) {
-            const key = getStableKey(arg.value);
+            const key = getStableKey(arg.value, keyMaxLength);
             hasI18nUsage = true;
 
             return tCallExpression(j, key);
@@ -241,7 +246,7 @@ function translateFunctionArguments(j: JSCodeshift, root: Collection<any>) {
           if (arg.type === 'ObjectExpression') {
             arg.properties = arg.properties.map((prop) => {
               if (prop.value && prop.value.type === 'StringLiteral') {
-                const key = getStableKey(prop.value.value);
+                const key = getStableKey(prop.value.value, keyMaxLength);
                 prop.value = tCallExpression(j, key);
                 hasI18nUsage = true;
               }
@@ -310,7 +315,7 @@ function translateJsxContent(j: JSCodeshift, root: Collection<any>) {
     )
     .replaceWith((path: NodePath<JSXText>) => {
       hasI18nUsage = true;
-      const key = getStableKey(path.node.value);
+      const key = getStableKey(path.node.value, keyMaxLength);
       return j.jsxExpressionContainer(
         j.callExpression(j.identifier('t'), [j.literal(key)])
       );
@@ -332,7 +337,7 @@ function translateJsxProps(j: JSCodeshift, root: Collection<any>) {
       if (!path.node.value || !path.node.value.value) {
         return;
       }
-      const key = getStableKey(path.node.value.value);
+      const key = getStableKey(path.node.value.value, keyMaxLength);
       hasI18nUsage = true;
 
       path.node.value = j.jsxExpressionContainer(tCallExpression(j, key));
@@ -347,7 +352,7 @@ function translateJsxProps(j: JSCodeshift, root: Collection<any>) {
       );
     })
     .forEach((path) => {
-      const key = getStableKey(path.node.expression.value);
+      const key = getStableKey(path.node.expression.value, keyMaxLength);
       hasI18nUsage = true;
 
       path.node.expression = tCallExpression(j, key);
@@ -366,12 +371,12 @@ function translateJsxProps(j: JSCodeshift, root: Collection<any>) {
       let expression = path.value.expression;
       if (j.Literal.check(expression.consequent)) {
         hasI18nUsage = true;
-        const key = getStableKey(expression.consequent.value);
+        const key = getStableKey(expression.consequent.value, keyMaxLength);
         expression.consequent = tCallExpression(j, key);
       }
       if (j.Literal.check(expression.alternate)) {
         hasI18nUsage = true;
-        const key = getStableKey(expression.alternate.value);
+        const key = getStableKey(expression.alternate.value, keyMaxLength);
         expression.alternate = tCallExpression(j, key);
       }
       hasI18nUsage = true;
@@ -385,7 +390,7 @@ function buildTranslationWithArgumentsCall(
   translateArgs: any,
   text: string
 ) {
-  const translationCallArguments = [j.literal(getStableKey(text))] as any;
+  const translationCallArguments = [j.literal(getStableKey(text, keyMaxLength))] as any;
   if (translateArgs.length > 0) {
     translationCallArguments.push(
       j.objectExpression(
