@@ -14,7 +14,7 @@
     "jscodeshift-imports": "^1.1.0",
     "prettier": "^1.16.4",
     "react-html-attributes": "^1.4.6",
-    "shelljs": "^0.8.3",
+    "shelljs": "^0.8.5",
     "slugify": "^1.3.4",
     "yargs": "^12.0.5"
   },
@@ -64,6 +64,7 @@
     "start": "yarn b src/index.ts",
     "test": "jest",
     "watch": "babel --extensions \".es6,.js,.es,.jsx,.mjs,.ts,.tsx\" -w -d ./lib ./src",
+    "extract": "yarn b src/index.ts",
     "codeshift": "node node_modules/.bin/jscodeshift -t ./src/i18nTransformerCodemod.ts"
   },
   "files": [

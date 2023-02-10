@@ -12,6 +12,12 @@ import { setKeyPrefix } from './prefix';
 
 const argv = getArgs();
 
-const jsFiles = shell.find(argv.src).filter(path => /\.(js|ts|tsx)$/.test(path));
+const files = shell.find(argv.src);
+
+if (files.stderr) {
+  throw new Error(`Could not find files at ${argv.src}`);
+}
+
+const jsFiles = files.filter(path => /\.(js|ts|tsx)$/.test(path));
 setKeyPrefix(argv.keyPrefix);
 generateResources(jsFiles, argv.keyMaxLength);
