@@ -5,25 +5,13 @@ generate a stable key for each string
 generate i18n files based on this
  */
 import shell from 'shelljs';
-import yargs from 'yargs';
 
+import { getArgs } from './args';
 import { generateResources } from './generateResources';
+import { setKeyPrefix } from './prefix';
 
-const argv = yargs
-  .usage(
-    'Extract all string inside JSXElement'
-  )
-  .default('src', process.cwd())
-  .describe(
-    'src',
-    'The source to collect strings'
-  )
-  .default('keyMaxLength', 40)
-  .describe(
-    'src',
-    'The source to collect strings'
-  )
-  .argv;
+const argv = getArgs();
 
 const jsFiles = shell.find(argv.src).filter(path => /\.(js|ts|tsx)$/.test(path));
+setKeyPrefix(argv.keyPrefix);
 generateResources(jsFiles, argv.keyMaxLength);

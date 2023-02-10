@@ -1,6 +1,8 @@
 import { remove } from 'diacritics';
 import slugify from 'slugify';
 
+import { getKeyPrefix } from './prefix';
+
 export const getStableKey = (str: string, keyMaxLength: number = 40) => {
   const cleanStr = remove(str)
     .toLocaleLowerCase()
@@ -14,7 +16,10 @@ export const getStableKey = (str: string, keyMaxLength: number = 40) => {
     .replace(/[^\x00-\x7F]/g, "")
     .slice(0, keyMaxLength);
 
-  return slugify(cleanStr);
+  const stableKey = slugify(cleanStr);
+
+  // only include the prefix when we have a key
+  return stableKey ? `${getKeyPrefix()}${stableKey}` : stableKey;
 };
 
 export const getStableValue = (str: string) => {
